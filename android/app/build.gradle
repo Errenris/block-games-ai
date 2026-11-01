@@ -10,10 +10,8 @@ android {
         applicationId "com.blockgames.ai"
         minSdk 21
         targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        versionCode 2
+        versionName "1.0.1"
     }
 
     buildTypes {
@@ -30,6 +28,5 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
+    // Pure native WebView - zero external dependency conflicts
 }
