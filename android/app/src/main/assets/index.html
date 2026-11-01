@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#3a9675">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Block Games">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>BLOCK GAMES - Super AI Edition</title>
+<style>
+  :root {
+    --body-bg: #101214;
+    --console-color: #3fa07f;
+    --console-shadow: #24634e;
+    --bezel-color: #1a1c1a;
+    --lcd-bg: #9ba888;
+    --lcd-pixel: #1c2118;
+    --btn-blue: #3e56cb;
+    --btn-blue-dark: #203185;
+    --btn-blue-shadow: #172466;
+    --btn-red: #db3737;
+    --btn-red-shadow: #851a1a;
+    --btn-green: #68ad38;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--body-bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Container wrapper */
+  .app-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    height: 100%;
+    max-width: 1100px;
+    padding: 10px;
+  }
+
+  /* Retro Handheld Console (Exact TikTok Live Style) */
+  .console {
+    background: radial-gradient(circle at 50% 20%, #4db08e 0%, #3ca07f 60%, #2f8367 100%);
+    width: 100%;
+    max-width: 395px;
+    height: 100%;
+    max-height: 840px;
+    border-radius: 36px 36px 42px 42px;
+    padding: 16px 16px 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -4px 8px var(--console-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  /* Screen Frame Bezel */
+  .screen-bezel {
+    background: var(--bezel-color);
+    border-radius: 16px;
+    padding: 12px 12px 8px;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.8), 0 2px 4px rgba(255,255,255,0.15);
+  }
+
+  /* LCD Screen Area */
+  .lcd-screen {
+    background: var(--lcd-bg);
+    border-radius: 4px;
+    padding: 6px;
+    display: flex;
+    gap: 8px;
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.25);
+    border: 2px solid #58614c;
+    color: var(--lcd-pixel);
+  }
+
+  /* Canvas playfield */
+  canvas#board {
+    display: block;
+    background: transparent;
+    width: 190px;
+    height: 380px;
+  }
+
+  /* LCD Side Panel */
+  .lcd-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding-left: 4px;
+    border-left: 1px dashed rgba(28,33,24,0.3);
+  }
+
+  .lcd-side .label {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  .lcd-side .val {
+    text-align: right;
+    font-size: 16px;
+    font-family: monospace;
+    font-weight: 900;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+
+  .next-box {
+    margin: 4px auto 8px;
+    display: flex;
+    justify-content: center;
+  }
+
+  canvas#next {
+    display: block;
+    width: 64px;
+    height: 64px;
+  }
+
+  /* LCD status symbols */
+  .lcd-icons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    font-size: 8px;
+    text-align: center;
+    border-top: 1px solid rgba(28,33,24,0.25);
+    padding-top: 4px;
+    margin-top: 2px;
+  }
+
+  .lcd-icon {
+    opacity: 0.25;
+    padding: 1px 0;
+  }
+
+  .lcd-icon.active {
+    opacity: 1;
+  }
+
+  /* Title printed on bezel */
+  .bezel-title {
+    color: #e5ece8;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 2px;
+    margin: 8px 0 2px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  }
+
+  /* Function buttons bar */
+  .fn-buttons-bar {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 6px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 20px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    margin: 6px 0;
+  }
+
+  .fn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 8px;
+    font-weight: 900;
+    color: #123325;
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+
+  .fn-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.4);
+    transition: transform 0.05s, box-shadow 0.05s;
+  }
+
+  .fn-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.4);
+  }
+
+  .fn-red { background: var(--btn-red); }
+  .fn-green { background: var(--btn-green); }
+  .fn-green.off { background: #56734c; opacity: 0.6; }
+
+  /* Controls Section: D-Pad & Action Buttons */
+  .controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 4px 8px;
+  }
+
+  /* D-PAD cross */
+  .dpad-cross {
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
+    grid-template-rows: repeat(3, 44px);
+    gap: 4px;
+    align-items: center;
+    justify-items: center;
+  }
+
+  .round-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--btn-blue);
+    box-shadow: 0 4px 0 var(--btn-blue-shadow), inset 0 1px 2px rgba(255,255,255,0.4);
+    cursor: pointer;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 900;
+    transition: transform 0.05s, box-shadow 0.05s;
+  }
+
+  .round-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 var(--btn-blue-shadow);
+  }
+
+  .round-btn.dark {
+    background: var(--btn-blue-dark);
+  }
+
+  .btn-label-sub {
+    font-size: 7px;
+    letter-spacing: 0.2px;
+    margin-top: -2px;
+  }
+
+  /* ROTATE button container */
+  .action-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 10px;
+  }
+
+  .action-label-top {
+    font-size: 10px;
+    font-weight: 900;
+    color: #123325;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .action-label-bottom {
+    font-size: 9px;
+    font-weight: 900;
+    color: #123325;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .big-rotate-btn {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: none;
+    background: radial-gradient(circle at 35% 30%, #526be3 0%, var(--btn-blue) 60%, #293ea8 100%);
+    box-shadow: 0 6px 0 var(--btn-blue-shadow), inset 0 2px 4px rgba(255,255,255,0.4);
+    cursor: pointer;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    transition: transform 0.05s, box-shadow 0.05s;
+  }
+
+  .big-rotate-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 var(--btn-blue-shadow);
+  }
+
+  /* Floating Drawer / Toggle Button for AI Dashboard */
+  .fab-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    background: #1e2430;
+    color: #5be0ab;
+    border: 1px solid #3d4a60;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(8px);
+  }
+
+  .fab-toggle:hover {
+    background: #273142;
+  }
+
+  /* Dedicated AI Dashboard Panel (Drawer on Android) */
+  .dash-panel {
+    background: #181c24;
+    border: 1px solid #2d3646;
+    border-radius: 18px;
+    padding: 20px;
+    width: 330px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    color: #e0e5eb;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .dash-panel h2 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    color: #5be0ab;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dash-panel .close-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #9aa;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .d-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid #262e3d;
+  }
+
+  .d-row b {
+    color: #fff;
+    font-family: monospace;
+    font-size: 13px;
+  }
+
+  .d-control {
+    margin-top: 6px;
+  }
+
+  .d-control label {
+    display: block;
+    font-size: 11px;
+    color: #9aaec7;
+    margin-bottom: 4px;
+  }
+
+  .d-control select, .d-control input[type=range] {
+    width: 100%;
+  }
+
+  .d-control select {
+    background: #10131a;
+    color: #fff;
+    border: 1px solid #3d4a60;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .ai-btn-toggle {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #2ba870;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 6px;
+    box-shadow: 0 4px 0 #1b6d48;
+    transition: all 0.1s;
+  }
+
+  .ai-btn-toggle.off {
+    background: #b53838;
+    box-shadow: 0 4px 0 #732222;
+  }
+
+  .ai-btn-toggle:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+  }
+
+  .stream-badge {
+    background: rgba(0,255,180,0.15);
+    border: 1px solid #00df9a;
+    color: #00df9a;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    display: inline-block;
+  }
+
+  .log-box {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #79ddad;
+    height: 70px;
+    overflow: hidden;
+    white-space: pre-line;
+    background: #10131a;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #232a38;
+    font-family: monospace;
+  }
+
+  /* Responsive styling for Mobile / Handheld View */
+  @media (max-width: 820px) {
+    body {
+      padding: 0;
+    }
+
+    .app-container {
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .console {
+      max-width: 100vw;
+      width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+      padding: calc(env(safe-area-inset-top, 8px) + 6px) 14px calc(env(safe-area-inset-bottom, 8px) + 10px);
+      box-shadow: none;
+    }
+
+    /* Modal drawer behavior on mobile */
+    .dash-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 85%;
+      max-width: 320px;
+      height: 100%;
+      border-radius: 20px 0 0 20px;
+      z-index: 200;
+      transform: translateX(110%);
+      overflow-y: auto;
+      box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+    }
+
+    .dash-panel.open {
+      transform: translateX(0);
+    }
+
+    .dash-panel .close-btn {
+      display: block;
+    }
+
+    .backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 150;
+    }
+
+    .backdrop.open {
+      display: block;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="backdrop" id="backdrop"></div>
+
+<button class="fab-toggle" id="fabToggle">
+  <span>⚙️</span> <span>AI & Pengaturan</span>
+</button>
+
+<div class="app-container">
+  <!-- Handheld Retro Console (Matches TikTok Live) -->
+  <div class="console">
+    <!-- Dark screen bezel -->
+    <div class="screen-bezel">
+      <!-- LCD Screen -->
+      <div class="lcd-screen">
+        <canvas id="board" width="200" height="400"></canvas>
+        <div class="lcd-side">
+          <div>
+            <div class="label">NEXT</div>
+            <div class="next-box">
+              <canvas id="next" width="80" height="80"></canvas>
+            </div>
+          </div>
+          <div>
+            <div class="label">HI-SCORE</div>
+            <div class="val" id="hiVal">0</div>
+            <div class="label">SCORE</div>
+            <div class="val" id="scoreVal">0</div>
+            <div class="label">LEVEL</div>
+            <div class="val" id="levelVal">1</div>
+          </div>
+          <div>
+            <div class="lcd-icons">
+              <div class="lcd-icon active" id="icoRfall">R-FALL</div>
+              <div class="lcd-icon active" id="icoPos">POS</div>
+              <div class="lcd-icon" id="icoPad">PAD</div>
+              <div class="lcd-icon" id="icoPause">PAUSE</div>
+              <div class="lcd-icon active" id="icoSound">♫</div>
+              <div class="lcd-icon active" id="icoAi">AI</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bezel-title">BLOCK GAMES</div>
+    </div>
+
+    <!-- 4 Function Buttons (Red Reset, Green Pause, Sound, Pos) -->
+    <div class="fn-buttons-bar">
+      <div class="fn-item">
+        <button class="fn-btn fn-red" id="fnReset"></button>
+        <span>RESET</span>
+      </div>
+      <div class="fn-item">
+        <button class="fn-btn fn-green" id="fnPause"></button>
+        <span>PAUSE<br>START</span>
+      </div>
+      <div class="fn-item">
+        <button class="fn-btn fn-green" id="fnSound"></button>
+        <span>SOUND</span>
+      </div>
+      <div class="fn-item">
+        <button class="fn-btn fn-green" id="fnPos"></button>
+        <span>POS</span>
+      </div>
+    </div>
+
+    <!-- D-Pad & Action Button -->
+    <div class="controls-row">
+      <div class="dpad-cross">
+        <span></span>
+        <button class="round-btn dark" id="btnUp">
+          <span>▲</span>
+          <span class="btn-label-sub">LVL+</span>
+        </button>
+        <span></span>
+
+        <button class="round-btn" id="btnLeft">◀</button>
+        <span></span>
+        <button class="round-btn" id="btnRight">▶</button>
+
+        <span></span>
+        <button class="round-btn" id="btnDown">▼</button>
+        <span></span>
+      </div>
+
+      <div class="action-container">
+        <div class="action-label-top">ROTATE</div>
+        <button class="big-rotate-btn" id="btnRotate">ROTATE</button>
+        <div class="action-label-bottom">SELECT</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dedicated AI Dashboard Panel (Drawer on Android) -->
+  <div class="dash-panel" id="dashPanel">
+    <h2>
+      <span>🤖 MASTER AI DASHBOARD</span>
+      <button class="close-btn" id="closeDash">✕</button>
+    </h2>
+
+    <div class="d-row">
+      <span>Mode AI</span>
+      <b id="dStatus" style="color: #5be0ab;">Super Intelligence (2-Ply)</b>
+    </div>
+    <div class="d-row">
+      <span>Baris Dihapus</span>
+      <b id="dLines">0</b>
+    </div>
+    <div class="d-row">
+      <span>Tetris (4-Baris Sekaligus)</span>
+      <b id="dTetris">0</b>
+    </div>
+    <div class="d-row">
+      <span>Total Balok Diletakkan</span>
+      <b id="dPieces">0</b>
+    </div>
+    <div class="d-row">
+      <span>Waktu Bertahan</span>
+      <b id="dTime">0s</b>
+    </div>
+    <div class="d-row">
+      <span>Rekor Bertahan</span>
+      <b id="dBest">0s</b>
+    </div>
+
+    <div class="d-control">
+      <label>Gaya Bermain AI</label>
+      <select id="aiStrategy">
+        <option value="tetris" selected>Incar 4 Baris (Tetris Streamer)</option>
+        <option value="master">Grandmaster (Tumpukan Bersih & Rata)</option>
+        <option value="safe">Super Aman (Minimalis Tinggi)</option>
+      </select>
+    </div>
+
+    <div class="d-control">
+      <label>Kecepatan Gerak AI</label>
+      <input type="range" id="speedSlider" min="1" max="10" value="6">
+    </div>
+
+    <button class="ai-btn-toggle" id="btnAiToggle">AI AUTO-PLAY: ON</button>
+
+    <div class="d-control" style="margin-top: 10px;">
+      <span class="stream-badge">LIVE STREAM OPTIMIZED</span>
+      <p style="font-size: 11px; color: #8899aa; margin: 4px 0 0;">
+        Baris sampah dinonaktifkan. AI menggunakan algoritma Dellacherie + kalkulasi balok berikutnya (Next-Piece lookahead) agar tidak pernah kalah konyol.
+      </p>
+    </div>
+
+    <div class="log-box" id="logBox">Super AI aktif. Mengkalkulasi 2 langkah ke depan...</div>
+  </div>
+</div>
+
+<script>
+/* ==================== CORE CONSTANTS ==================== */
+const W = 10, H = 20, S = 20;
+const SHAPES = {
+  I: [[1,1,1,1]],
+  O: [[1,1],[1,1]],
+  T: [[0,1,0],[1,1,1]],
+  S: [[0,1,1],[1,1,0]],
+  Z: [[1,1,0],[0,1,1]],
+  J: [[1,0,0],[1,1,1]],
+  L: [[0,0,1],[1,1,1]]
+};
+const NAMES = Object.keys(SHAPES);
+const $ = id => document.getElementById(id);
+const boardCanvas = $('board'), nextCanvas = $('next');
+const bctx = boardCanvas.getContext('2d'), nctx = nextCanvas.getContext('2d');
+
+let grid = [], cur = null, nxt = null, plan = null;
+let score = 0, lines = 0, level = 1, startLevel = 1, tetrisCount = 0;
+let hiScore = +localStorage.getItem('bg_hi') || 0;
+let bestTime = +localStorage.getItem('bg_best') || 0;
+let gamesCount = 1, piecesCount = 0;
+let isOver = false, isPaused = false;
+let aiEnabled = true, showGhost = true, soundEnabled = true;
+let elapsedTime = 0, dropTimer = 0, stepTimer = 0, lastFrameTime = 0;
+
+/* ==================== HAPTIC & AUDIO SYSTEM ==================== */
+function vibrate(ms = 20) {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(ms); } catch (e) {}
+  }
+}
+
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function playTone(freq, dur = 0.08, type = 'square', vol = 0.06, slide = 0) {
+  if (!soundEnabled) return;
+  initAudio();
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    if (slide) {
+      osc.frequency.linearRampToValueAtTime(freq + slide, audioCtx.currentTime + dur);
+    }
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+  } catch (e) {}
+}
+
+const SFX = {
+  move: () => playTone(300, 0.04),
+  rotate: () => playTone(540, 0.06),
+  drop: () => playTone(200, 0.05, 'triangle', 0.08),
+  land: () => playTone(140, 0.08, 'triangle', 0.1),
+  clear: (count) => {
+    for (let i = 0; i <= count + 1; i++) {
+      setTimeout(() => playTone(440 + i * 140, 0.09), i * 65);
+    }
+  },
+  gameOver: () => {
+    [400, 320, 240, 160].forEach((f, i) => setTimeout(() => playTone(f, 0.18, 'square', 0.07), i * 150));
+  },
+  levelUp: () => {
+    [587, 740, 880, 1174].forEach((f, i) => setTimeout(() => playTone(f, 0.08), i * 75));
+  },
+  btn: () => playTone(720, 0.03)
+};
+
+/* ==================== GAME MATRIX & PIECE LOGIC ==================== */
+const rotateMatrix = m => m[0].map((_, i) => m.map(row => row[i]).reverse());
+
+function randomPiece() {
+  const name = NAMES[Math.floor(Math.random() * NAMES.length)];
+  return { m: SHAPES[name].map(r => [...r]), type: name };
+}
+
+function fits(g, m, x, y) {
+  for (let r = 0; r < m.length; r++) {
+    for (let c = 0; c < m[0].length; c++) {
+      if (m[r][c]) {
+        const gx = x + c, gy = y + r;
+        if (gx < 0 || gx >= W || gy >= H || (gy >= 0 && g[gy][gx])) return false;
+      }
+    }
+  }
+  return true;
+}
+
+function lockPiece(g, m, x, y) {
+  for (let r = 0; r < m.length; r++) {
+    for (let c = 0; c < m[0].length; c++) {
+      if (m[r][c] && y + r >= 0) g[y + r][x + c] = 1;
+    }
+  }
+}
+
+function clearFullLines(g) {
+  let cleared = 0;
+  for (let r = H - 1; r >= 0; r--) {
+    if (g[r].every(v => v)) {
+      g.splice(r, 1);
+      g.unshift(Array(W).fill(0));
+      cleared++;
+      r++;
+    }
+  }
+  return cleared;
+}
+
+/* ==================== SUPER INTELLIGENT AI (DELLACHERIE + LOOKAHEAD) ==================== */
+/**
+ * Evaluates board state using Pierre Dellacherie's multi-feature heuristic:
+ * - Landing height penalty
+ * - Eroded piece cells bonus
+ * - Board row transitions penalty
+ * - Board column transitions penalty
+ * - Holes count (heavily penalized!)
+ * - Cumulative well depth penalty
+ * - Strategy modifier (Tetris 4-line open column)
+ */
+function evaluateDellacherie(g, piece, py, linesCleared, strategy) {
+  const landingHeight = H - (py + piece.m.length / 2);
+  const erodedPieceCells = linesCleared * 3.4;
+
+  // Row transitions (horizontal borders and empty-filled flips)
+  let rowTransitions = 0;
+  for (let r = 0; r < H; r++) {
+    let prev = 1; // Left wall is solid
+    for (let c = 0; c < W; c++) {
+      const curVal = g[r][c];
+      if (curVal !== prev) rowTransitions++;
+      prev = curVal;
+    }
+    if (prev !== 1) rowTransitions++; // Right wall is solid
+  }
+
+  // Column transitions (vertical top border and empty-filled flips)
+  let colTransitions = 0;
+  for (let c = 0; c < W; c++) {
+    let prev = 0; // Top sky is empty
+    for (let r = 0; r < H; r++) {
+      const curVal = g[r][c];
+      if (curVal !== prev) colTransitions++;
+      prev = curVal;
+    }
+    if (prev !== 1) colTransitions++; // Bottom floor is solid
+  }
+
+  // Holes (covered empty spaces) & Column Heights
+  let holes = 0;
+  let aggregateHeight = 0;
+  const colHeights = Array(W).fill(0);
+
+  for (let c = 0; c < W; c++) {
+    let foundBlock = false;
+    for (let r = 0; r < H; r++) {
+      if (g[r][c]) {
+        if (!foundBlock) {
+          colHeights[c] = H - r;
+          foundBlock = true;
+        }
+      } else if (foundBlock) {
+        holes++;
+      }
+    }
+    aggregateHeight += colHeights[c];
+  }
+
+  // Bumpiness (height difference between adjacent columns)
+  let bumpiness = 0;
+  for (let c = 0; c < W - 1; c++) {
+    bumpiness += Math.abs(colHeights[c] - colHeights[c + 1]);
+  }
+
+  // Cumulative wells
+  let wells = 0;
+  for (let c = 0; c < W; c++) {
+    let wellDepth = 0;
+    for (let r = 0; r < H; r++) {
+      if (!g[r][c]) {
+        const leftWall = (c === 0) || g[r][c - 1];
+        const rightWall = (c === W - 1) || g[r][c + 1];
+        if (leftWall && rightWall) {
+          wellDepth++;
+          wells += wellDepth;
+        } else {
+          wellDepth = 0;
+        }
+      } else {
+        wellDepth = 0;
+      }
+    }
+  }
+
+  // Strategy tuning
+  let strategyBonus = 0;
+  if (strategy === 'tetris') {
+    // Leave column 9 as the Tetris well for the I-piece
+    const wellCol = 9;
+    const stackHeight = Math.max(...colHeights.slice(0, 9));
+    const wellHeight = colHeights[wellCol];
+
+    if (linesCleared === 4) {
+      strategyBonus += 150; // Massive reward for clearing a full Tetris!
+    } else if (wellHeight < stackHeight - 2) {
+      strategyBonus += 25;  // Reward keeping the well clear
+    }
+
+    // Discourage clearing 1 or 2 lines if stack is safely low (< 12)
+    if (linesCleared > 0 && linesCleared < 4 && stackHeight < 12) {
+      strategyBonus -= 15;
+    }
+  } else if (strategy === 'safe') {
+    strategyBonus = (linesCleared * 20) - (aggregateHeight * 2.0);
+  }
+
+  // Weighted Dellacherie heuristic formula
+  return (-4.5 * landingHeight) +
+         (erodedPieceCells * 3.4) -
+         (3.2 * rowTransitions) -
+         (9.4 * colTransitions) -
+         (18.0 * holes) -          // Maximum priority: ZERO HOLES
+         (3.4 * wells) -
+         (1.8 * bumpiness) -
+         (0.9 * aggregateHeight) +
+         strategyBonus;
+}
+
+/**
+ * Super Smart AI Decision with 2-Ply Lookahead:
+ * Evaluates all moves of the current piece, and for top candidates,
+ * checks what the NEXT piece will achieve, selecting the global optimum!
+ */
+function computeSuperAIPlan(curPiece, nextPiece) {
+  const strategy = $('aiStrategy').value;
+  const curCandidates = [];
+  let m = curPiece.m;
+
+  // 1. Explore all rotations and x-positions for current piece
+  for (let rt = 0; rt < 4; rt++) {
+    for (let x = -2; x < W; x++) {
+      if (!fits(grid, m, x, 0)) continue;
+      let y = 0;
+      while (fits(grid, m, x, y + 1)) y++;
+
+      const virtualGrid = grid.map(row => [...row]);
+      lockPiece(virtualGrid, m, x, y);
+      const linesCleared = clearFullLines(virtualGrid);
+      const score1 = evaluateDellacherie(virtualGrid, curPiece, y, linesCleared, strategy);
+
+      curCandidates.push({
+        score1,
+        rt,
+        x,
+        targetY: y,
+        linesCleared,
+        virtualGrid
+      });
+    }
+    m = rotateMatrix(m);
+  }
+
+  if (!curCandidates.length) return null;
+
+  // Sort current candidates
+  curCandidates.sort((a, b) => b.score1 - a.score1);
+
+  // If next piece is not known, return top 1
+  if (!nextPiece) return curCandidates[0];
+
+  // 2. 2-Ply Lookahead: Evaluate top 5 moves against the NEXT piece
+  const topK = Math.min(6, curCandidates.length);
+  let bestGlobalMove = null;
+  let bestCombinedScore = -Infinity;
+
+  for (let i = 0; i < topK; i++) {
+    const candidate = curCandidates[i];
+    let bestNextScore = -Infinity;
+    let nm = nextPiece.m;
+
+    for (let nrt = 0; nrt < 4; nrt++) {
+      for (let nx = -2; nx < W; nx++) {
+        if (!fits(candidate.virtualGrid, nm, nx, 0)) continue;
+        let ny = 0;
+        while (fits(candidate.virtualGrid, nm, nx, ny + 1)) ny++;
+
+        const nextVirtualGrid = candidate.virtualGrid.map(row => [...row]);
+        lockPiece(nextVirtualGrid, nm, nx, ny);
+        const nextLines = clearFullLines(nextVirtualGrid);
+        const score2 = evaluateDellacherie(nextVirtualGrid, nextPiece, ny, nextLines, strategy);
+
+        if (score2 > bestNextScore) {
+          bestNextScore = score2;
+        }
+      }
+      nm = rotateMatrix(nm);
+    }
+
+    // Combined score: 65% immediate quality + 35% future compatibility
+    const combinedScore = (candidate.score1 * 0.65) + (bestNextScore * 0.35);
+    if (combinedScore > bestCombinedScore) {
+      bestCombinedScore = combinedScore;
+      bestGlobalMove = candidate;
+    }
+  }
+
+  return bestGlobalMove || curCandidates[0];
+}
+
+/* ==================== GAME FLOW ==================== */
+function spawnPiece() {
+  cur = nxt || randomPiece();
+  nxt = randomPiece();
+  piecesCount++;
+  cur.x = Math.floor((W - cur.m[0].length) / 2);
+  cur.y = 0;
+  cur.rt = 0;
+
+  if (!fits(grid, cur.m, cur.x, cur.y)) {
+    triggerGameOver();
+    return;
+  }
+
+  plan = aiEnabled ? computeSuperAIPlan(cur, nxt) : null;
+}
+
+function triggerGameOver() {
+  isOver = true;
+  SFX.gameOver();
+  vibrate(300);
+
+  const t = Math.floor(elapsedTime);
+  if (t > bestTime) {
+    bestTime = t;
+    localStorage.setItem('bg_best', bestTime);
+  }
+  logMessage(`GAME OVER! Bertahan: ${t} detik. Memulai ulang...`);
+  setTimeout(resetGame, 2000);
+}
+
+function resetGame() {
+  grid = Array.from({ length: H }, () => Array(W).fill(0));
+  score = 0;
+  lines = 0;
+  tetrisCount = 0;
+  level = startLevel;
+  isOver = false;
+  nxt = null;
+  piecesCount = 0;
+  elapsedTime = 0;
+  dropTimer = 0;
+  stepTimer = 0;
+  gamesCount++;
+  spawnPiece();
+  logMessage('Game baru dimulai dengan Super AI.');
+}
+
+function landPiece() {
+  lockPiece(grid, cur.m, cur.x, cur.y);
+  SFX.land();
+  vibrate(18);
+
+  const cleared = clearFullLines(grid);
+  if (cleared > 0) {
+    if (cleared === 4) {
+      tetrisCount++;
+      logMessage(`🔥 TETRIS! 4 Baris bersih sekaligus! (Total: ${tetrisCount})`);
+    }
+
+    const points = [0, 100, 300, 700, 1500][cleared] * level;
+    score += points;
+    lines += cleared;
+    SFX.clear(cleared);
+    vibrate(40);
+
+    const newLvl = startLevel + Math.floor(lines / 10);
+    if (newLvl > level) {
+      level = newLvl;
+      SFX.levelUp();
+      logMessage(`Level naik: Level ${level}! Kecepatan meningkat.`);
+    }
+  }
+
+  if (score > hiScore) {
+    hiScore = score;
+    localStorage.setItem('bg_hi', hiScore);
+  }
+
+  spawnPiece();
+}
+
+function aiStep() {
+  if (!plan || !cur) return;
+
+  // 1. Rotate to targeted rotation
+  if (cur.rt < plan.rt) {
+    const rotated = rotateMatrix(cur.m);
+    if (fits(grid, rotated, cur.x, cur.y)) {
+      cur.m = rotated;
+      SFX.rotate();
+    }
+    cur.rt++;
+    return;
+  }
+
+  // 2. Move horizontally to target column
+  if (cur.x < plan.x && fits(grid, cur.m, cur.x + 1, cur.y)) {
+    cur.x++;
+    SFX.move();
+    return;
+  }
+  if (cur.x > plan.x && fits(grid, cur.m, cur.x - 1, cur.y)) {
+    cur.x--;
+    SFX.move();
+    return;
+  }
+}
+
+/* ==================== USER CONTROLS ==================== */
+const Actions = {
+  left: () => {
+    if (fits(grid, cur.m, cur.x - 1, cur.y)) {
+      cur.x--;
+      SFX.move();
+      vibrate(15);
+    }
+  },
+  right: () => {
+    if (fits(grid, cur.m, cur.x + 1, cur.y)) {
+      cur.x++;
+      SFX.move();
+      vibrate(15);
+    }
+  },
+  rotate: () => {
+    const rotated = rotateMatrix(cur.m);
+    if (fits(grid, rotated, cur.x, cur.y)) {
+      cur.m = rotated;
+      SFX.rotate();
+      vibrate(20);
+    }
+  },
+  down: () => {
+    if (fits(grid, cur.m, cur.x, cur.y + 1)) {
+      cur.y++;
+      score++;
+      SFX.drop();
+      vibrate(12);
+    }
+  },
+  hardDrop: () => {
+    while (fits(grid, cur.m, cur.x, cur.y + 1)) {
+      cur.y++;
+      score += 2;
+    }
+    landPiece();
+  }
+};
+
+function manualMove(action) {
+  if (aiEnabled || isOver || isPaused || !cur) return;
+  Actions[action]();
+}
+
+function bindControl(id, handler) {
+  const el = $(id);
+  if (!el) return;
+  const onTrigger = (e) => {
+    e.preventDefault();
+    initAudio();
+    handler();
+  };
+  el.addEventListener('pointerdown', onTrigger);
+}
+
+bindControl('btnLeft', () => manualMove('left'));
+bindControl('btnRight', () => manualMove('right'));
+bindControl('btnRotate', () => manualMove('rotate'));
+bindControl('btnDown', () => manualMove('down'));
+bindControl('btnUp', () => {
+  if (level < 15) {
+    level++;
+    startLevel = Math.max(startLevel, level);
+    SFX.levelUp();
+    vibrate(25);
+    logMessage(`Level diset manual: ${level}`);
+  }
+});
+
+// Function buttons
+bindControl('fnReset', () => {
+  SFX.btn();
+  vibrate(30);
+  startLevel = 1;
+  resetGame();
+});
+
+bindControl('fnPause', () => {
+  SFX.btn();
+  vibrate(25);
+  isPaused = !isPaused;
+  $('icoPause').classList.toggle('active', isPaused);
+  logMessage(isPaused ? 'Game Dijeda (PAUSE).' : 'Game Dilanjutkan (RESUME).');
+});
+
+bindControl('fnSound', () => {
+  soundEnabled = !soundEnabled;
+  $('fnSound').classList.toggle('off', !soundEnabled);
+  $('icoSound').classList.toggle('active', soundEnabled);
+  if (soundEnabled) SFX.btn();
+  vibrate(25);
+});
+
+bindControl('fnPos', () => {
+  showGhost = !showGhost;
+  $('fnPos').classList.toggle('off', !showGhost);
+  $('icoPos').classList.toggle('active', showGhost);
+  SFX.btn();
+  vibrate(25);
+});
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  initAudio();
+  const k = e.key;
+  if (k === 'p' || k === 'P') {
+    $('fnPause').dispatchEvent(new Event('pointerdown'));
+    return;
+  }
+  if (k === 'ArrowLeft' || k === 'a') manualMove('left');
+  else if (k === 'ArrowRight' || k === 'd') manualMove('right');
+  else if (k === 'ArrowUp' || k === 'w') manualMove('rotate');
+  else if (k === 'ArrowDown' || k === 's') manualMove('down');
+  else if (k === ' ') {
+    e.preventDefault();
+    manualMove('hardDrop');
+  }
+});
+
+// Drawer / Panel toggle
+const fabToggle = $('fabToggle');
+const dashPanel = $('dashPanel');
+const backdrop = $('backdrop');
+const closeDash = $('closeDash');
+
+function openDrawer() {
+  dashPanel.classList.add('open');
+  backdrop.classList.add('open');
+}
+function closeDrawer() {
+  dashPanel.classList.remove('open');
+  backdrop.classList.remove('open');
+}
+
+fabToggle.addEventListener('click', openDrawer);
+closeDash.addEventListener('click', closeDrawer);
+backdrop.addEventListener('click', closeDrawer);
+
+// Strategy Change Handler
+$('aiStrategy').addEventListener('change', () => {
+  if (aiEnabled && cur) {
+    plan = computeSuperAIPlan(cur, nxt);
+  }
+  logMessage(`Strategi AI diubah ke: ${$('aiStrategy').selectedOptions[0].text}`);
+});
+
+// AI Toggle Button
+$('btnAiToggle').addEventListener('click', () => {
+  aiEnabled = !aiEnabled;
+  $('btnAiToggle').textContent = `AI AUTO-PLAY: ${aiEnabled ? 'ON' : 'OFF'}`;
+  $('btnAiToggle').classList.toggle('off', !aiEnabled);
+  $('icoAi').classList.toggle('active', aiEnabled);
+  SFX.btn();
+  vibrate(30);
+
+  if (aiEnabled && cur) {
+    plan = computeSuperAIPlan(cur, nxt);
+  }
+  logMessage(`AI Auto-Play diubah ke: ${aiEnabled ? 'AKTIF' : 'NONAKTIF'}`);
+});
+
+/* ==================== RENDERING (RETRO LCD STYLE) ==================== */
+function drawRetroCell(ctx, col, row, size, isGhost = false) {
+  const x = col * size, y = row * size;
+  if (isGhost) {
+    ctx.fillStyle = 'rgba(28, 33, 24, 0.28)';
+    ctx.fillRect(x + 2, y + 2, size - 4, size - 4);
+    ctx.fillStyle = '#9ba888';
+    ctx.fillRect(x + 4, y + 4, size - 8, size - 8);
+    return;
+  }
+
+  // Classic Brick Game LCD brick representation:
+  // Solid outer border -> clear background -> centered solid inner dot
+  ctx.fillStyle = '#1c2118';
+  ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
+
+  ctx.fillStyle = '#9ba888';
+  ctx.fillRect(x + 3, y + 3, size - 6, size - 6);
+
+  ctx.fillStyle = '#1c2118';
+  ctx.fillRect(x + 5, y + 5, size - 10, size - 10);
+}
+
+function render() {
+  // Clear main board
+  bctx.fillStyle = '#9ba888';
+  bctx.fillRect(0, 0, 200, 400);
+
+  // Faint background dot grid (authentic LCD screen effect)
+  bctx.fillStyle = 'rgba(28, 33, 24, 0.08)';
+  for (let r = 0; r < H; r++) {
+    for (let c = 0; c < W; c++) {
+      bctx.fillRect(c * S + 2, r * S + 2, S - 4, S - 4);
+    }
+  }
+
+  // Draw locked blocks in grid
+  for (let r = 0; r < H; r++) {
+    for (let c = 0; c < W; c++) {
+      if (grid[r][c]) {
+        drawRetroCell(bctx, c, r, S);
+      }
+    }
+  }
+
+  // Draw ghost & active piece
+  if (cur && !isOver) {
+    if (showGhost) {
+      let ghostY = cur.y;
+      while (fits(grid, cur.m, cur.x, ghostY + 1)) ghostY++;
+      cur.m.forEach((row, r) => {
+        row.forEach((val, c) => {
+          if (val) drawRetroCell(bctx, cur.x + c, ghostY + r, S, true);
+        });
+      });
+    }
+
+    cur.m.forEach((row, r) => {
+      row.forEach((val, c) => {
+        if (val) drawRetroCell(bctx, cur.x + c, cur.y + r, S);
+      });
+    });
+  }
+
+  // Draw Next piece
+  nctx.fillStyle = '#9ba888';
+  nctx.fillRect(0, 0, 80, 80);
+
+  // Faint grid in preview
+  nctx.fillStyle = 'rgba(28, 33, 24, 0.08)';
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      nctx.fillRect(c * 20 + 2, r * 20 + 2, 16, 16);
+    }
+  }
+
+  if (nxt) {
+    const m = nxt.m;
+    const offsetX = (4 - m[0].length) / 2;
+    const offsetY = (4 - m.length) / 2;
+    m.forEach((row, r) => {
+      row.forEach((val, c) => {
+        if (val) drawRetroCell(nctx, offsetX + c, offsetY + r, 20);
+      });
+    });
+  }
+
+  // Update LCD numbers
+  $('scoreVal').textContent = score;
+  $('hiVal').textContent = hiScore;
+  $('levelVal').textContent = level;
+}
+
+const logHistory = [];
+function logMessage(text) {
+  logHistory.unshift(text);
+  if (logHistory.length > 5) logHistory.length = 5;
+  $('logBox').textContent = logHistory.join('\n');
+}
+
+function updateDashboard() {
+  $('dStatus').textContent = isOver ? 'GAME OVER' : (isPaused ? 'Dijeda' : (aiEnabled ? 'Super AI (Aktif)' : 'Manual'));
+  $('dLines').textContent = lines;
+  $('dTetris').textContent = tetrisCount;
+  $('dPieces').textContent = piecesCount;
+  $('dTime').textContent = Math.floor(elapsedTime) + 's';
+  $('dBest').textContent = bestTime + 's';
+}
+
+/* ==================== MAIN GAME LOOP ==================== */
+function gameLoop(time) {
+  const dt = Math.min(100, time - lastFrameTime);
+  lastFrameTime = time;
+
+  if (!isOver && !isPaused) {
+    const speed = +$('speedSlider').value;
+
+    elapsedTime += dt / 1000;
+    stepTimer += dt;
+    dropTimer += dt;
+
+    // AI reaction speed based on slider
+    const aiStepInterval = 280 / speed;
+    if (aiEnabled && stepTimer > aiStepInterval) {
+      stepTimer = 0;
+      aiStep();
+    }
+
+    // Gravity interval: speeds up with level
+    const baseGravity = Math.max(65, 800 - (level * 50));
+    const isAligned = aiEnabled && plan && cur.rt >= plan.rt && cur.x === plan.x;
+    const effectiveDrop = isAligned ? Math.min(baseGravity, 35) : baseGravity;
+
+    if (dropTimer > effectiveDrop) {
+      dropTimer = 0;
+      if (fits(grid, cur.m, cur.x, cur.y + 1)) {
+        cur.y++;
+      } else {
+        landPiece();
+      }
+    }
+  }
+
+  if (cur && nxt) render();
+  updateDashboard();
+  requestAnimationFrame(gameLoop);
+}
+
+// Service worker registration for PWA installability on Android
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// Initial boot
+resetGame();
+requestAnimationFrame(t => {
+  lastFrameTime = t;
+  gameLoop(t);
+});
+</script>
+</body>
+</html>

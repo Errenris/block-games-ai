@@ -1,0 +1,80 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Compile Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Initialize Gradle Wrapper & Build APK
+        working-directory: ./android
+        run: |
+          if [ ! -f "gradlew" ]; then
+            echo "Generating Gradle wrapper..."
+            gradle wrapper
+          fi
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK for Easy Download
+        run: |
+          mkdir -p release-apk
+          cp android/app/build/outputs/apk/debug/*.apk release-apk/BlockGames-AI.apk
+
+      - name: Upload APK as GitHub Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlockGames-AI-APK
+          path: release-apk/BlockGames-AI.apk
+          retention-days: 30
+
+      - name: Publish GitHub Release (Push to main / master)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Block Games AI v1.0.${{ github.run_number }}
+          files: release-apk/BlockGames-AI.apk
+          body: |
+            ### 🎮 Block Games AI - Android APK Siap Pasang
+            
+            Build otomatis berhasil selesai dari commit `${{ github.sha }}`!
+            
+            **Fitur:**
+            - 🕹️ Tampilan konsol retro hijau persis seperti di TikTok LIVE.
+            - 🧠 **Super AI Grandmaster:** Algoritma Pierre Dellacherie + 2-Ply Lookahead (zero holes).
+            - 🚫 **Tanpa Baris Sampah:** Permainan murni & bersih.
+            - 📱 **Android Native:** Layar penuh, respon sentuhan getar haptik, dan audio retro.
+            
+            **Cara Pasang:**
+            1. Download file `BlockGames-AI.apk` di bawah.
+            2. Buka di HP Android dan izinkan instalasi aplikasi.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
