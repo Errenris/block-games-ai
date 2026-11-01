@@ -25,11 +25,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build APK with Gradle
+      - name: Build APK with Gradle 8.6
         working-directory: ./android
         run: |
-          echo "Setting up Gradle wrapper..."
-          gradle wrapper
+          echo "Setting up Gradle wrapper with version 8.6 for Android..."
+          gradle wrapper --gradle-version 8.6
           chmod +x gradlew
           echo "Building debug APK..."
           ./gradlew assembleDebug --no-daemon --stacktrace
