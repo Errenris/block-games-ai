@@ -87,32 +87,37 @@
   .lcd-screen {
     background: var(--lcd-bg);
     border-radius: 4px;
-    padding: 6px;
+    padding: 6px 8px;
     display: flex;
     gap: 8px;
     box-shadow: inset 0 0 12px rgba(0,0,0,0.25);
     border: 2px solid #58614c;
     color: var(--lcd-pixel);
+    align-items: stretch;
   }
 
-  /* Canvas playfield */
+  /* Canvas playfield - wider, taller, and much more spacious */
   canvas#board {
     display: block;
     background: transparent;
-    width: 190px;
-    height: 380px;
+    flex: 1;
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    max-height: 480px;
   }
 
-  /* LCD Side Panel */
+  /* LCD Side Panel - compact, streamlined, and clean */
   .lcd-side {
-    flex: 1;
+    width: 86px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     font-weight: 900;
     font-size: 11px;
     letter-spacing: 0.5px;
-    padding-left: 4px;
+    padding-left: 6px;
     border-left: 1px dashed rgba(28,33,24,0.3);
   }
 
@@ -541,7 +546,7 @@
     <div class="screen-bezel">
       <!-- LCD Screen -->
       <div class="lcd-screen">
-        <canvas id="board" width="200" height="400"></canvas>
+        <canvas id="board" width="240" height="576"></canvas>
         <div class="lcd-side">
           <div>
             <div class="label">NEXT</div>
@@ -652,6 +657,15 @@
     </div>
 
     <div class="d-control">
+      <label>Kapasitas Papan (Tinggi Grid)</label>
+      <select id="boardSizeSelect">
+        <option value="24" selected>10 × 24 Baris (Ekstra Lega - Rekomendasi)</option>
+        <option value="22">10 × 22 Baris (Lega Seimbang)</option>
+        <option value="20">10 × 20 Baris (Klasik Retro)</option>
+      </select>
+    </div>
+
+    <div class="d-control">
       <label>Gaya Bermain</label>
       <select id="aiStrategy">
         <option value="tetris" selected>Incar 4 Baris (Tetris Streamer)</option>
@@ -673,7 +687,15 @@
 
 <script>
 /* ==================== CORE CONSTANTS ==================== */
-const W = 10, H = 20, S = 20;
+const W = 10;
+let H = 24;
+let S = 24;
+
+function updateBoardDimensions() {
+  boardCanvas.width = W * S;
+  boardCanvas.height = H * S;
+  boardCanvas.style.aspectRatio = `${W} / ${H}`;
+}
 const SHAPES = {
   I: [[1,1,1,1]],
   O: [[1,1],[1,1]],
@@ -892,8 +914,8 @@ function evaluateDellacherie(g, piece, py, linesCleared, strategy) {
       strategyBonus += 25;  // Reward keeping the well clear
     }
 
-    // Discourage clearing 1 or 2 lines if stack is safely low (< 12)
-    if (linesCleared > 0 && linesCleared < 4 && stackHeight < 12) {
+    // Discourage clearing 1 or 2 lines if stack is safely low
+    if (linesCleared > 0 && linesCleared < 4 && stackHeight < (H - 8)) {
       strategyBonus -= 15;
     }
   } else if (strategy === 'safe') {
@@ -1247,8 +1269,20 @@ $('aiStrategy').addEventListener('change', () => {
   if (aiEnabled && cur) {
     plan = computeSuperAIPlan(cur, nxt);
   }
-  logMessage(`Strategi AI diubah ke: ${$('aiStrategy').selectedOptions[0].text}`);
+  logMessage(`Strategi diubah ke: ${$('aiStrategy').selectedOptions[0].text}`);
 });
+
+// Board Size / Capacity Change Handler
+const boardSelect = $('boardSizeSelect');
+if (boardSelect) {
+  boardSelect.addEventListener('change', (e) => {
+    H = parseInt(e.target.value, 10);
+    localStorage.setItem('bg_board_h', H);
+    updateBoardDimensions();
+    resetGame();
+    logMessage(`Kapasitas papan diubah ke: 10 × ${H} baris.`);
+  });
+}
 
 // Auto-play Toggle Button
 $('btnAiToggle').addEventListener('click', () => {
@@ -1284,13 +1318,15 @@ function drawRetroCell(ctx, col, row, size, isGhost = false) {
   ctx.fillRect(x + 3, y + 3, size - 6, size - 6);
 
   ctx.fillStyle = '#1c2118';
-  ctx.fillRect(x + 5, y + 5, size - 10, size - 10);
+  const dotSize = Math.max(6, size - 12);
+  const dotOffset = Math.floor((size - dotSize) / 2);
+  ctx.fillRect(x + dotOffset, y + dotOffset, dotSize, dotSize);
 }
 
 function render() {
   // Clear main board
   bctx.fillStyle = '#9ba888';
-  bctx.fillRect(0, 0, 200, 400);
+  bctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
 
   // Faint background dot grid (authentic LCD screen effect)
   bctx.fillStyle = 'rgba(28, 33, 24, 0.08)';
@@ -1420,6 +1456,15 @@ if ('serviceWorker' in navigator) {
 }
 
 // Initial boot
+const savedH = +localStorage.getItem('bg_board_h');
+if (savedH && (savedH === 20 || savedH === 22 || savedH === 24)) {
+  H = savedH;
+}
+if ($('boardSizeSelect')) {
+  $('boardSizeSelect').value = H;
+}
+updateBoardDimensions();
+
 resetGame();
 requestAnimationFrame(t => {
   lastFrameTime = t;
