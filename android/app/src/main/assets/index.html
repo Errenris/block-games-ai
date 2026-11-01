@@ -313,29 +313,32 @@
     box-shadow: 0 2px 0 var(--btn-blue-shadow);
   }
 
-  /* Floating Drawer / Toggle Button for AI Dashboard */
+  /* Floating Gear Settings Button */
   .fab-toggle {
     position: fixed;
     top: 14px;
     right: 14px;
-    background: #1e2430;
-    color: #5be0ab;
-    border: 1px solid #3d4a60;
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: bold;
+    background: rgba(22, 28, 36, 0.45);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 18px;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
     z-index: 100;
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: transform 0.1s, background 0.15s;
   }
 
-  .fab-toggle:hover {
-    background: #273142;
+  .fab-toggle:active {
+    transform: scale(0.9);
+    background: rgba(35, 45, 60, 0.7);
   }
 
   /* Dedicated AI Dashboard Panel (Drawer on Android) */
@@ -527,8 +530,8 @@
 
 <div class="backdrop" id="backdrop"></div>
 
-<button class="fab-toggle" id="fabToggle">
-  <span>⚙️</span> <span>AI & Pengaturan</span>
+<button class="fab-toggle" id="fabToggle" aria-label="Pengaturan">
+  ⚙️
 </button>
 
 <div class="app-container">
@@ -561,7 +564,7 @@
               <div class="lcd-icon" id="icoPad">PAD</div>
               <div class="lcd-icon" id="icoPause">PAUSE</div>
               <div class="lcd-icon active" id="icoSound">♫</div>
-              <div class="lcd-icon active" id="icoAi">AI</div>
+              <div class="lcd-icon" id="icoReset">RESET</div>
             </div>
           </div>
         </div>
@@ -616,40 +619,40 @@
     </div>
   </div>
 
-  <!-- Dedicated AI Dashboard Panel (Drawer on Android) -->
+  <!-- Settings Drawer Panel -->
   <div class="dash-panel" id="dashPanel">
     <h2>
-      <span>🤖 MASTER AI DASHBOARD</span>
+      <span>⚙️ PENGATURAN</span>
       <button class="close-btn" id="closeDash">✕</button>
     </h2>
 
     <div class="d-row">
-      <span>Mode AI</span>
-      <b id="dStatus" style="color: #5be0ab;">Super Intelligence (2-Ply)</b>
+      <span>Auto-Play</span>
+      <b id="dStatus" style="color: #5be0ab;">Aktif (Grandmaster)</b>
     </div>
     <div class="d-row">
       <span>Baris Dihapus</span>
       <b id="dLines">0</b>
     </div>
     <div class="d-row">
-      <span>Tetris (4-Baris Sekaligus)</span>
+      <span>Tetris (4-Baris)</span>
       <b id="dTetris">0</b>
     </div>
     <div class="d-row">
-      <span>Total Balok Diletakkan</span>
+      <span>Total Balok</span>
       <b id="dPieces">0</b>
     </div>
     <div class="d-row">
-      <span>Waktu Bertahan</span>
+      <span>Waktu Bermain</span>
       <b id="dTime">0s</b>
     </div>
     <div class="d-row">
-      <span>Rekor Bertahan</span>
-      <b id="dBest">0s</b>
+      <span>Rekor Skor</span>
+      <b id="dBest">0</b>
     </div>
 
     <div class="d-control">
-      <label>Gaya Bermain AI</label>
+      <label>Gaya Bermain</label>
       <select id="aiStrategy">
         <option value="tetris" selected>Incar 4 Baris (Tetris Streamer)</option>
         <option value="master">Grandmaster (Tumpukan Bersih & Rata)</option>
@@ -658,20 +661,13 @@
     </div>
 
     <div class="d-control">
-      <label>Kecepatan Gerak AI</label>
+      <label>Kecepatan Gerak</label>
       <input type="range" id="speedSlider" min="1" max="10" value="6">
     </div>
 
-    <button class="ai-btn-toggle" id="btnAiToggle">AI AUTO-PLAY: ON</button>
+    <button class="ai-btn-toggle" id="btnAiToggle">AUTO-PLAY: ON</button>
 
-    <div class="d-control" style="margin-top: 10px;">
-      <span class="stream-badge">LIVE STREAM OPTIMIZED</span>
-      <p style="font-size: 11px; color: #8899aa; margin: 4px 0 0;">
-        Baris sampah dinonaktifkan. AI menggunakan algoritma Dellacherie + kalkulasi balok berikutnya (Next-Piece lookahead) agar tidak pernah kalah konyol.
-      </p>
-    </div>
-
-    <div class="log-box" id="logBox">Super AI aktif. Mengkalkulasi 2 langkah ke depan...</div>
+    <div class="log-box" id="logBox" style="margin-top: 10px;">Sistem aktif. Auto-play berjalan...</div>
   </div>
 </div>
 
@@ -1254,19 +1250,18 @@ $('aiStrategy').addEventListener('change', () => {
   logMessage(`Strategi AI diubah ke: ${$('aiStrategy').selectedOptions[0].text}`);
 });
 
-// AI Toggle Button
+// Auto-play Toggle Button
 $('btnAiToggle').addEventListener('click', () => {
   aiEnabled = !aiEnabled;
-  $('btnAiToggle').textContent = `AI AUTO-PLAY: ${aiEnabled ? 'ON' : 'OFF'}`;
+  $('btnAiToggle').textContent = `AUTO-PLAY: ${aiEnabled ? 'ON' : 'OFF'}`;
   $('btnAiToggle').classList.toggle('off', !aiEnabled);
-  $('icoAi').classList.toggle('active', aiEnabled);
   SFX.btn();
   vibrate(30);
 
   if (aiEnabled && cur) {
     plan = computeSuperAIPlan(cur, nxt);
   }
-  logMessage(`AI Auto-Play diubah ke: ${aiEnabled ? 'AKTIF' : 'NONAKTIF'}`);
+  logMessage(`Auto-Play diubah ke: ${aiEnabled ? 'AKTIF' : 'MANUAL'}`);
 });
 
 /* ==================== RENDERING (RETRO LCD STYLE) ==================== */

@@ -18,6 +18,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -25,20 +28,28 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Ensure Permanent Keystore
+        working-directory: ./android/app
+        run: |
+          if [ ! -f "release.keystore" ]; then
+            echo "Creating permanent release keystore for future updates..."
+            keytool -genkeypair -v -keystore release.keystore -alias blockgames -keyalg RSA -keysize 2048 -validity 10000 -storepass blockgames123 -keypass blockgames123 -dname "CN=BlockGames, OU=Games, O=BlockGames, L=Jakarta, ST=Jakarta, C=ID"
+          fi
+
       - name: Build APK with Gradle 8.6
         working-directory: ./android
         run: |
-          echo "Setting up Gradle wrapper with version 8.6 for Android..."
+          echo "Setting up Gradle wrapper..."
           gradle wrapper --gradle-version 8.6
           chmod +x gradlew
-          echo "Building debug APK..."
+          echo "Building signed debug and release APK..."
           ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Prepare APK for Artifact
         run: |
           mkdir -p release-apk
           cp android/app/build/outputs/apk/debug/*.apk release-apk/BlockGames-AI.apk
-          echo "APK successfully built and prepared!"
+          echo "APK successfully signed and prepared!"
 
       - name: Upload APK as GitHub Artifact
         uses: actions/upload-artifact@v4
@@ -55,19 +66,14 @@ jobs:
           name: Block Games AI v1.0.${{ github.run_number }}
           files: release-apk/BlockGames-AI.apk
           body: |
-            ### 🎮 Block Games AI - Android APK Siap Pasang
+            ### 🎮 Block Games AI - Android APK (Signed Keystore)
             
             Build otomatis berhasil selesai dari commit `${{ github.sha }}`!
             
-            **Fitur:**
-            - 🕹️ Tampilan konsol retro hijau persis seperti di TikTok LIVE.
-            - 🧠 **Super AI Grandmaster:** Algoritma Pierre Dellacherie + 2-Ply Lookahead (zero holes).
-            - 🚫 **Tanpa Baris Sampah:** Permainan murni & bersih.
-            - 📱 **Android Native:** Layar penuh, respon sentuhan getar haptik, dan audio retro.
-            
-            **Cara Pasang:**
-            1. Download file `BlockGames-AI.apk` di bawah.
-            2. Buka di HP Android dan izinkan instalasi aplikasi.
+            **Pembaruan v1.0.${{ github.run_number }}:**
+            - 🔑 **Signed Keystore Permanen:** Update aplikasi ke depan tidak akan bentrok (*signature conflict*).
+            - ⚙️ **Tombol Pengaturan Minimalis:** Hanya ikon gear `⚙️` tanpa tulisan panjang yang menutupi layar.
+            - 🕹️ **LCD Otentik:** Tulisan `AI` di layar LCD dihilangkan, tampilan konsol 100% murni seperti konsol retro asli.
           draft: false
           prerelease: false
         env:
