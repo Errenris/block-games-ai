@@ -25,26 +25,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Initialize Gradle Wrapper & Build APK
+      - name: Build APK with Gradle
         working-directory: ./android
         run: |
-          if [ ! -f "gradlew" ]; then
-            echo "Generating Gradle wrapper..."
-            gradle wrapper
-          fi
+          echo "Setting up Gradle wrapper..."
+          gradle wrapper
           chmod +x gradlew
+          echo "Building debug APK..."
           ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Rename APK for Easy Download
+      - name: Prepare APK for Artifact
         run: |
           mkdir -p release-apk
           cp android/app/build/outputs/apk/debug/*.apk release-apk/BlockGames-AI.apk
+          echo "APK successfully built and prepared!"
 
       - name: Upload APK as GitHub Artifact
         uses: actions/upload-artifact@v4
